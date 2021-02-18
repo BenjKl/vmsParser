@@ -29,17 +29,31 @@ class ParameterModel(QAbstractTableModel):
         self.selectedRows = [False] * len(fields(self.dataList[0]))
         print("Init {0} cols and {1} rows".format(len(self.selectedColumns), len(self.selectedRows)))
 
-    # # Implemented
-    # def insertColumns(self, pos, cols=1, index=QModelIndex()):
-    #     """Insert new columns into the model
-    #     """
-    #     self.beginInsertColumns(QModelIndex(), pos, pos + cols - 1)
-    #     for col in range(cols):
-    #         #Insert new Dataclass object into the list at the given pos
-    #         #Using type() create a new object of the dataclasses class at current pos
-    #         self.dataList.insert(pos + col,  type(self.dataList[pos-1])()) #replace(self.dataList[0])
-    #     self.endInsertColumns()
-    #     return True
+    # Implemented
+    def insertColumns(self, pos, cols=1, index=QModelIndex()):
+        """Insert new columns into the model
+        """
+        self.beginInsertColumns(QModelIndex(), pos, pos + cols - 1)
+        for col in range(cols):
+            #Insert new Dataclass object into the list at the given pos
+            #Using type() create a new object of the dataclasses class at current pos
+            self.dataList.insert(pos + col,  type(self.dataList[pos-1])()) #replace(self.dataList[0])
+            #Insert new item in selectedColumns list
+            self.selectedColumns.insert(pos, False)
+        self.endInsertColumns()
+        return True
+
+    def appendData(self, data):
+        """Append new column data to the model
+        """
+        self.beginInsertColumns(QModelIndex(), self.columnCount()-1, self.columnCount()- 1)
+        #Insert new Dataclass object into the list at the given pos
+        #Using type() create a new object of the dataclasses class at current pos
+        self.dataList.insert(self.columnCount(),  data) #replace(self.dataList[0])
+        #Insert new item in selectedColumns list
+        self.selectedColumns.insert(self.columnCount()-1, False)
+        self.endInsertColumns()
+        return True        
 
     # # Implemented
     # def removeColumns(self, pos, cols=1, parent=QModelIndex()):
@@ -204,19 +218,7 @@ class ParameterModel(QAbstractTableModel):
 
         self.loadData(data)
 
-    def loadfiles(self, fileNames):
-        """Load a list of vamas files into list of dataclasses to use as new model data
 
-        ### Arguments:
-            fileNames {list} -- List of filenames
-        """
-        data = list()   
-        for filename in fileNames:
-            vms = VAMAS_File(fileName=filename)
-            vms.readVamasFile()
-            data.append(vms)
-        #Replace existing model data
-        self.loadData(data)
             
 
     def saveModelToConfigFile(self, fileName):
@@ -355,7 +357,7 @@ class MainWindow(QMainWindow):
         #Menu Bar events
         self.actionSave.triggered.connect(self.saveModel)
         self.actionLoad.triggered.connect(self.loadModel)  
-        self.actionLoad.triggered.connect(self.appendData)                
+        self.actionAppend_Files.triggered.connect(self.appendData)                
         self.actionQuit.triggered.connect(self.close)
     
         #Button events
@@ -373,7 +375,7 @@ class MainWindow(QMainWindow):
         ### Arguments:
             index {QModelIndex} -- row/colum of changed data
         """
-        #print("Model row {0}, column {1} changed".format(index.row(), index.column()))
+        print("Model edited event row {0}, column {1} changed".format(index.row(), index.column()))
         #First column changes selected fields which are displayed in paramTable
         if index.column() == 0:
             if self.model.selectedRows[index.row()-1] == True:
@@ -420,6 +422,7 @@ class MainWindow(QMainWindow):
         """
         # self.dataMapper.submit()
         #self.dataMapper.setCurrentIndex(index)
+        print("Selecting model column " + str(index))
         self.selectedModelColumn = index
         self.updateSelectedData()
 
@@ -443,6 +446,9 @@ class MainWindow(QMainWindow):
         #print ("Combobox currentIndex", self.dataSelector.currentIndex(), " from ", self.dataSelector.count())
         #Select line in inverse paramTable
         index = self.proxy.index(self.selectedModelColumn, 0) #Get column = row index from Transpose Proxy model
+        print("Param table selecting row {0}".format(self.proxy2.mapFromSource(index).row()))
+        #Deselect all
+        self.paramTable.clearSelection()
         self.paramTable.selectRow(self.proxy2.mapFromSource(index).row()) #Convert to row index in sorted Proxy model
 
         #Plot data
@@ -541,12 +547,15 @@ class MainWindow(QMainWindow):
     def loadModel(self):
         """Present file dialog to load model data from .vms files
         """
+        print("model column count before load " + str(self.model.columnCount()))
         #Present file dialog using last saved folder
         fileNames = self.vmsFileSelectorDialog()
-        if len(fileNames) > 0: #Continue if files selected
+        if fileNames: #Continue if files selected
             #Clear popup menu before loading new data
             self.dataSelector.clear()
-            self.model.loadfiles(fileNames)
+            dataList = self.loadfilesIntoList(fileNames)
+            #Supply the new datalist to the model to replace its data
+            self.model.loadData(dataList)
             #Select first model column
             self.selectedModelColumn = 1
             #Update the column number
@@ -559,7 +568,37 @@ class MainWindow(QMainWindow):
     def appendData(self):
         """Present file dialog to append files
         """
+        if self.dataSelector.currentText() == "":
+            self.loadModel()
+        else:
+            #Present file dialog using last saved folder
+            print("model column count before append " + str(self.model.columnCount()))
+            print("Selected model column " + str(self.selectedModelColumn))
+            fileNames = self.vmsFileSelectorDialog()
+            if fileNames: #Continue if files selected
+                #Deselect all
+                self.paramTable.clearSelection()
+                dataList = self.loadfilesIntoList(fileNames)
+                #Get the number of columns before insert
+                oldColumnNum = self.model.columnCount()
+                for data in dataList:
+                    self.dataSelector.addItem(os.path.basename(data.fileName))
+                    self.model.appendData(data)
+                self.selectModelColumn(oldColumnNum)
+                self.vmsTable.resizeRowsToContents() #Resize rows in table view to make space for multiline comments
+            
+    def loadfilesIntoList(self, fileNames):
+        """Load a list of vamas files into list of dataclasses to use as new model data
 
+        ### Arguments:
+            fileNames {list} -- List of filenames
+        """
+        data = list()   
+        for filename in fileNames:
+            vms = VAMAS_File(fileName=filename)
+            vms.readVamasFile()
+            data.append(vms)
+        return data
     
     def vmsFileSelectorDialog(self):
         """ Present file dialog to select one or more vamas files
