@@ -4,9 +4,8 @@ block_cipher = None
 
 
 a = Analysis(['vmsParser.py'],
-             pathex=['/Users/benjamin/Documents/python/PyQt/vmsParser'],
              binaries=[],
-             datas=[('gui.ui', '.')],
+             datas=[('gui.ui', '.'), ('icon_XPS.ico', '.')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -49,6 +48,22 @@ if sys.platform.startswith('darwin'):
                 info_plist={'NSHighResolutionCapable': 'True'},
                 icon='icon_XPS.icns'
                )
+#Create .exe for windows               
+if sys.platform == 'win32' or sys.platform == 'win64' or sys.platform == 'linux':
+  exe = EXE(pyz,
+            a.scripts,
+            a.binaries,
+            a.zipfiles,
+            a.datas,
+            name='vmsParser',
+            debug=False,
+            strip=False,
+            upx=True,
+            runtime_tmpdir=None,
+            console=False,
+            icon='icon_XPS.ico')               
 
-
-# Run 'codesign --remove-signature Python' on Python file in App
+# Necessary step tested on MacOS X 10.13:
+# Execute
+# codesign --remove-signature Python
+# on Python file in App container to remove non-working pyinstaller signature

@@ -8,7 +8,7 @@ import re
 @dataclass
 class VAMAS_File:
     """ DataClass to store the experiment data contained in a VAMAS file
-        Format describeb in 
+        Format described in 
         Dench, W. A., L. B. Hazell, M. P. Seah, und the VAMAS Community. 
         „VAMAS Surface Chemical Analysis Standard Data Transfer Format with Skeleton Decoding Programs“. 
         Surface and Interface Analysis 13, Nr. 2–3 (November 1988): 63–122. 
@@ -290,10 +290,10 @@ class VAMAS_File:
         lines = iter(self.file.readlines())
 
         self.formatName = next(lines).strip()
-        self.institution_identifier = next(lines).strip()
+        self.institutionName = next(lines).strip()
         self.instrumentModelName = next(lines).strip()
-        self.operator_identifier = next(lines).strip()
-        self.experiment_identifier = next(lines).strip()
+        self.operatorName = next(lines).strip()
+        self.experimentName = next(lines).strip()
         self.numCommentLines = int(next(lines).strip())
 
         #Parse the comment
@@ -398,20 +398,20 @@ class VAMAS_File:
             self.blockComment = self.blockComment + next(lines)
 
         #B.K. parse optional parameters from block comment
-        self.analyserAperture, unit, self.block_comment = parseParameter(self.blockComment, "Aperture")    
+        self.analyserAperture, unit, self.blockComment = parseParameter(self.blockComment, "Aperture")    
         #X-Ray source parameters
-        self.xrayVoltage, unit, self.block_comment = parseParameter(self.blockComment, "X-Ray Source Voltage")
-        self.xrayPower, unit, self.block_comment = parseParameter(self.blockComment, "X-Ray Source Power")    
-        self.xrayEmCurr, unit, self.block_comment = parseParameter(self.blockComment, "X-Ray Source Emission Current")    
-        self.xrayFilCurr, unit, self.block_comment = parseParameter(self.blockComment, "X-Ray Source Filament Current")    
-        self.xrayLeakCurr, unit, self.block_comment = parseParameter(self.blockComment, "X-Ray Source Leak Current")    
+        self.xrayVoltage, unit, self.blockComment = parseParameter(self.blockComment, "X-Ray Source Voltage")
+        self.xrayPower, unit, self.blockComment = parseParameter(self.blockComment, "X-Ray Source Power")    
+        self.xrayEmCurr, unit, self.blockComment = parseParameter(self.blockComment, "X-Ray Source Emission Current")    
+        self.xrayFilCurr, unit, self.blockComment = parseParameter(self.blockComment, "X-Ray Source Filament Current")    
+        self.xrayLeakCurr, unit, self.blockComment = parseParameter(self.blockComment, "X-Ray Source Leak Current")    
         #Sample stage parameters
-        self.sampleStageX, unit, self.block_comment = parseParameter(self.blockComment, "Sample Position X")
-        self.sampleStageY, unit, self.block_comment = parseParameter(self.blockComment, "Sample Position Y")
-        self.sampleStageZ, unit, self.block_comment = parseParameter(self.blockComment, "Sample Position Z")
-        self.sampleStageTheta, unit, self.block_comment = parseParameter(self.blockComment, "Sample Position Theta")
-        self.sampleStagePhi, unit, self.block_comment = parseParameter(self.blockComment, "Sample Position Phi")
-        self.analyserExitSlit, self.block_comment = parseString(self.blockComment, "Exit Slit")
+        self.sampleStageX, unit, self.blockComment = parseParameter(self.blockComment, "Sample Position X")
+        self.sampleStageY, unit, self.blockComment = parseParameter(self.blockComment, "Sample Position Y")
+        self.sampleStageZ, unit, self.blockComment = parseParameter(self.blockComment, "Sample Position Z")
+        self.sampleStageTheta, unit, self.blockComment = parseParameter(self.blockComment, "Sample Position Theta")
+        self.sampleStagePhi, unit, self.blockComment = parseParameter(self.blockComment, "Sample Position Phi")
+        self.analyserExitSlit, self.blockComment = parseString(self.blockComment, "Exit Slit")
 
         self.blockComment = self.blockComment.strip()
 
@@ -538,7 +538,7 @@ class VAMAS_File:
         sputteringCoTechs = ['AES diff', 'AES dir', 'EDX', 'ELS', 'UPS', 'XPS', 'XRF']
         if self.technique in sputteringCoTechs and self.expMode in sputteringTechs:
             self.sputteringSourceEnergy = float(next(lines).strip())
-            self.sputtering_source_beam_current = float(next(lines).strip())
+            self.sputteringSourceBeamCurrent = float(next(lines).strip())
             self.sputteringSourceWidthX = float(next(lines).strip())
             self.sputteringSourceWidthY = float(next(lines).strip())
             self.sputteringSourceAngleOfIncidence = float(next(lines).strip())

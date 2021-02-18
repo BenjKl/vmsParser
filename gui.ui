@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>907</width>
-    <height>679</height>
+    <width>1045</width>
+    <height>764</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -115,9 +115,21 @@
        <enum>Qt::Horizontal</enum>
       </property>
       <widget class="QWidget" name="verticalLayoutWidget_4">
-       <layout class="QVBoxLayout" name="verticalLayout_4">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0">
         <item>
          <widget class="QSplitter" name="splitter">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
@@ -125,6 +137,18 @@
            <layout class="QVBoxLayout" name="verticalLayout">
             <item>
              <widget class="QTableView" name="vmsTable">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+                <horstretch>1</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="baseSize">
+               <size>
+                <width>400</width>
+                <height>0</height>
+               </size>
+              </property>
               <attribute name="horizontalHeaderVisible">
                <bool>false</bool>
               </attribute>
@@ -162,7 +186,7 @@
               </property>
               <property name="minimumSize">
                <size>
-                <width>400</width>
+                <width>350</width>
                 <height>30</height>
                </size>
               </property>
@@ -187,10 +211,22 @@
             </item>
             <item>
              <widget class="QWidget" name="plotSpace" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>1</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>0</width>
                 <height>100</height>
+               </size>
+              </property>
+              <property name="baseSize">
+               <size>
+                <width>400</width>
+                <height>0</height>
                </size>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -219,11 +255,38 @@
        </layout>
       </widget>
       <widget class="QWidget" name="verticalLayoutWidget_3">
-       <layout class="QVBoxLayout" name="verticalLayout_3">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>2</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0">
         <item>
          <widget class="QTableView" name="paramTable">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>1</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="sizeIncrement">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="baseSize">
+           <size>
+            <width>700</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="selectionBehavior">
            <enum>QAbstractItemView::SelectRows</enum>
+          </property>
+          <property name="sortingEnabled">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -238,7 +301,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>907</width>
+     <width>1045</width>
      <height>22</height>
     </rect>
    </property>
@@ -247,11 +310,41 @@
      <string>File</string>
     </property>
     <addaction name="actionLoad"/>
+    <addaction name="actionAppend_Files"/>
     <addaction name="actionSave"/>
+    <addaction name="separator"/>
+    <addaction name="actionRemove_Selected"/>
+    <addaction name="actionRemove_All"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionSelect_All"/>
+    <addaction name="actionSelect_Marked"/>
+    <addaction name="actionCheck_Selected"/>
+    <addaction name="actionMark_None"/>
+   </widget>
+   <widget class="QMenu" name="menuData">
+    <property name="title">
+     <string>Data</string>
+    </property>
+    <addaction name="actionEdit_Username"/>
+    <addaction name="actionSet_Fermi_Level"/>
+   </widget>
+   <widget class="QMenu" name="menuPlot">
+    <property name="title">
+     <string>Plot</string>
+    </property>
+    <addaction name="actionSwitch_Eb_Ek"/>
+    <addaction name="actionShow_next_column"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
+   <addaction name="menuData"/>
+   <addaction name="menuPlot"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionLoad">
@@ -278,7 +371,7 @@
   </action>
   <action name="actionQuit">
    <property name="text">
-    <string>Quitten</string>
+    <string>Quit</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
@@ -292,6 +385,82 @@
   <action name="actionTest">
    <property name="text">
     <string>Test</string>
+   </property>
+  </action>
+  <action name="actionSelect_All">
+   <property name="text">
+    <string>Select All</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A</string>
+   </property>
+  </action>
+  <action name="actionCheck_Selected">
+   <property name="text">
+    <string>Mark Selected</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
+   </property>
+  </action>
+  <action name="actionMark_None">
+   <property name="text">
+    <string>Mark None</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+U</string>
+   </property>
+  </action>
+  <action name="actionSelect_Marked">
+   <property name="text">
+    <string>Select Marked</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+A</string>
+   </property>
+  </action>
+  <action name="actionAppend_Files">
+   <property name="text">
+    <string>Append Files</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+L</string>
+   </property>
+  </action>
+  <action name="actionRemove_Selected">
+   <property name="text">
+    <string>Remove Selected</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionRemove_All">
+   <property name="text">
+    <string>Remove All</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+R</string>
+   </property>
+  </action>
+  <action name="actionEdit_Username">
+   <property name="text">
+    <string>Edit Operator name</string>
+   </property>
+  </action>
+  <action name="actionSet_Fermi_Level">
+   <property name="text">
+    <string>Set Fermi Level</string>
+   </property>
+  </action>
+  <action name="actionSwitch_Eb_Ek">
+   <property name="text">
+    <string>Switch Eb/Ek</string>
+   </property>
+  </action>
+  <action name="actionShow_next_column">
+   <property name="text">
+    <string>Show next column</string>
    </property>
   </action>
  </widget>

@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow,QFileDialog,QDialog
 from PyQt5.QtWidgets import QDataWidgetMapper
 from PyQt5 import uic
+from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QSettings, QModelIndex, QAbstractTableModel, QTransposeProxyModel, QSortFilterProxyModel
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
@@ -8,15 +9,11 @@ import sys
 import os
 import configparser
 from dataclasses import dataclass, fields, field, asdict, replace
-#import resources
 from vamasSimple import VAMAS_File
 
 #VIEW <-> CONTROLLER <-> MODEL <-> DATA pattern with PyQt5
 #  ^                      ^
 #  |------DataMapper------|
-
-
-
 
 
 class ParameterModel(QAbstractTableModel):
@@ -354,11 +351,11 @@ class MainWindow(QMainWindow):
         self.paramTable.doubleClicked.connect(lambda index: (self.selectModelColumn(self.proxy2.mapToSource(index).row())))
         #Hide first row with model-row selector checkboxes
         self.paramTable.hideRow(0)
-        self.paramTable.setSortingEnabled(True)
 
         #Menu Bar events
         self.actionSave.triggered.connect(self.saveModel)
-        self.actionLoad.triggered.connect(self.loadModel)        
+        self.actionLoad.triggered.connect(self.loadModel)  
+        self.actionLoad.triggered.connect(self.appendData)                
         self.actionQuit.triggered.connect(self.close)
     
         #Button events
@@ -393,7 +390,7 @@ class MainWindow(QMainWindow):
         """Init selected dataclass fields = columns in param Table with default values
         """
         #Show only selected columns
-        visibleColumns = ["sample_identifier", "block_identifier", "position_identifier", "date", "technique", "analyser_setting_Name", "analyser_pass_energy_of_retard_ratio_or_mass_resolution", "signal_collection_time"]
+        visibleColumns = ["sampleName", "blockName", "posName", "date", "technique", "analyserSettingStr", "analyzerPEorRR", "dwellTime"]
         for r in range(self.proxy.columnCount()):
             if not self.proxy.headerData(r, Qt.Horizontal) in visibleColumns:
                 self.paramTable.hideColumn(r)
@@ -472,7 +469,7 @@ class MainWindow(QMainWindow):
                 #print("plotting also column " + str(colIndex+1))
                 #Get current data class object
                 data = self.model.getObject(colIndex+1) #Starts from 0
-                self.spectralPlot.axes.plot(data.xValues, data.ordinate_values[0])
+                self.spectralPlot.axes.plot(data.xAxisValuesList, data.yAxisValuesList[0])
 
         #redraw
         self.spectralPlot.draw()            
@@ -542,20 +539,11 @@ class MainWindow(QMainWindow):
         settings.setValue('saveFolder', os.path.dirname(foldername))
 
     def loadModel(self):
-        """Present file dialog to load model data from config (.ini) file
+        """Present file dialog to load model data from .vms files
         """
         #Present file dialog using last saved folder
-        lastFolder = self.getLastSaveFolder()
-        dialog = QFileDialog(self)
-        dialog.setWindowTitle("Open settings")
-        dialog.setNameFilter("vms files (*.vms)")
-        dialog.setFileMode(QFileDialog.ExistingFiles) #Select multiple existing files
-        dialog.setDirectory(lastFolder)
-        dialog.setAcceptMode(QFileDialog.AcceptOpen)
-        if dialog.exec_() == QDialog.Accepted:
-            fileNames = dialog.selectedFiles()
-            #Save selected foldername for next time
-            self.saveLastFolder(fileNames[0])
+        fileNames = self.vmsFileSelectorDialog()
+        if len(fileNames) > 0: #Continue if files selected
             #Clear popup menu before loading new data
             self.dataSelector.clear()
             self.model.loadfiles(fileNames)
@@ -567,10 +555,36 @@ class MainWindow(QMainWindow):
             for data in self.model.getData():
                 self.dataSelector.addItem(os.path.basename(data.fileName))
             self.vmsTable.resizeRowsToContents() #Resize rows in table view to make space for multiline comments
+    
+    def appendData(self):
+        """Present file dialog to append files
+        """
 
+    
+    def vmsFileSelectorDialog(self):
+        """ Present file dialog to select one or more vamas files
+            Starting with last used folder from App preferences
+
+        ### Returns:
+            {list} -- list of selected filePaths
+        """
+        lastFolder = self.getLastSaveFolder()
+        dialog = QFileDialog(self)
+        dialog.setWindowTitle("Open vms files")
+        dialog.setNameFilter("vms files (*.vms)")
+        dialog.setFileMode(QFileDialog.ExistingFiles) #Select multiple existing files
+        dialog.setDirectory(lastFolder)
+        dialog.setAcceptMode(QFileDialog.AcceptOpen)
+        if dialog.exec_() == QDialog.Accepted:
+            fileNames = dialog.selectedFiles()
+            #Save selected foldername for next time
+            self.saveLastFolder(fileNames[0])
+            return fileNames
+        else:
+            return None
 
 
 app = QApplication(sys.argv)
-
+app.setWindowIcon(QIcon(MainWindow.resourcePath(None, 'icon_XPS.ico')))
 window = MainWindow()
 app.exec_()
