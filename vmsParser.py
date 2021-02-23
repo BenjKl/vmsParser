@@ -1,15 +1,17 @@
+import sys, os, configparser
+
 from PyQt5.QtWidgets import QApplication, QMainWindow,QFileDialog,QDialog
 from PyQt5.QtWidgets import QDataWidgetMapper
 from PyQt5 import uic
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QSettings, QModelIndex, QAbstractTableModel, QTransposeProxyModel, QSortFilterProxyModel
+
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
-import sys
-import os
-import configparser
+
 from dataclasses import dataclass, fields, field, asdict, replace
 from vamasSimple import VAMAS_File
+from jopes import JOPES_Investigation, JOPES_Measurement
 
 #VIEW <-> CONTROLLER <-> MODEL <-> DATA pattern with PyQt5
 #  ^                      ^
@@ -29,42 +31,31 @@ class ParameterModel(QAbstractTableModel):
         self.selectedRows = [False] * len(fields(self.dataList[0]))
         print("Init {0} cols and {1} rows".format(len(self.selectedColumns), len(self.selectedRows)))
 
-    # Implemented
-    def insertColumns(self, pos, cols=1, index=QModelIndex()):
-        """Insert new columns into the model
-        """
-        self.beginInsertColumns(QModelIndex(), pos, pos + cols - 1)
-        for col in range(cols):
-            #Insert new Dataclass object into the list at the given pos
-            #Using type() create a new object of the dataclasses class at current pos
-            self.dataList.insert(pos + col,  type(self.dataList[pos-1])()) #replace(self.dataList[0])
-            #Insert new item in selectedColumns list
-            self.selectedColumns.insert(pos, False)
-        self.endInsertColumns()
-        return True
 
     def appendData(self, data):
         """Append new column data to the model
         """
         self.beginInsertColumns(QModelIndex(), self.columnCount()-1, self.columnCount()- 1)
-        #Insert new Dataclass object into the list at the given pos
-        #Using type() create a new object of the dataclasses class at current pos
-        self.dataList.insert(self.columnCount(),  data) #replace(self.dataList[0])
+        self.dataList.insert(self.columnCount(),  data) 
         #Insert new item in selectedColumns list
         self.selectedColumns.insert(self.columnCount()-1, False)
         self.endInsertColumns()
         return True        
 
-    # # Implemented
-    # def removeColumns(self, pos, cols=1, parent=QModelIndex()):
-    #     """Delete columns from the model
-    #     """
-    #     self.beginRemoveColumns(QModelIndex(), pos, pos+cols-1)
-    #     for col in range(cols):
-    #         #delete the object at the given index in the list
-    #         del self.dataList[pos+col]
-    #     self.endRemoveColumns()
-    #     return True
+    # Implemented
+    def removeColumns(self, pos, cols=1, parent=QModelIndex()):
+        """Delete columns from the model
+        """
+        self.beginRemoveColumns(QModelIndex(), pos, pos+cols-1)
+        for col in range(cols):
+            #delete the object at the given index in the dataList and selectedColumnsList
+            del self.dataList[pos+col-1]
+            del self.selectedColumns[pos+col-1]
+        if len(self.dataList) == 0:
+            self.dataList.append(VAMAS_File())
+            self.selectedColumns.append(False)
+        self.endRemoveColumns()
+        return True
 
     # Implemented
     def flags(self, index):
@@ -359,7 +350,9 @@ class MainWindow(QMainWindow):
         self.actionLoad.triggered.connect(self.loadModel)  
         self.actionAppend_Files.triggered.connect(self.appendData)                
         self.actionQuit.triggered.connect(self.close)
-    
+        self.actionRemove_Selected.triggered.connect(self.removeData)
+        self.actionExport_to_Chantal.triggered.connect(self.exportToChantal)
+
         #Button events
         self.buttonPrevArea.clicked.connect(self.goToPreviousColumn)
         
@@ -514,7 +507,21 @@ class MainWindow(QMainWindow):
             #Save the model to config file
             self.model.saveModelToConfigFile(fileName)
             print ("Saved to " + fileName)
-        
+    
+    def exportToChantal(self):
+        """Export selected columns to CHANTAL
+        """
+        for colIndex, checked in enumerate(self.model.selectedColumns):
+            if checked:
+                #Get current data class object
+                data = self.model.getObject(colIndex+1)
+                print("Exporting column {0} from file {1}".format(colIndex+1, data.fileName))
+                joInv = JOPES_Investigation()
+                invID = joInv.import_investigation(data)
+                print(joInv.data)
+                joMeas = JOPES_Measurement()
+                print(joMeas.import_measurement(data,invID))
+                print(joMeas.data)
 
 
     def getLastSaveFolder(self):
@@ -586,7 +593,24 @@ class MainWindow(QMainWindow):
                     self.model.appendData(data)
                 self.selectModelColumn(oldColumnNum)
                 self.vmsTable.resizeRowsToContents() #Resize rows in table view to make space for multiline comments
-            
+
+    def removeData(self):
+        print("Selected Rows: ")
+        selections = self.paramTable.selectionModel()
+        rows = [selection.row() for selection in selections.selectedRows()]
+        rows.sort(reverse=True)
+        print(rows)
+        #Remove all selected lines from selection
+        for row in rows:
+            print(row)
+            self.model.removeColumns(row)
+            self.dataSelector.blockSignals(True)
+            self.dataSelector.removeItem(row-1)
+            self.dataSelector.blockSignals(False)            
+
+        self.selectModelColumn(1)
+
+
     def loadfilesIntoList(self, fileNames):
         """Load a list of vamas files into list of dataclasses to use as new model data
 

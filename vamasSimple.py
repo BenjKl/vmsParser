@@ -137,7 +137,7 @@ class VAMAS_File:
     expVariablesList : list = field(default_factory=list)
 
     #Like AlKalpha
-    AnalysisSourceLabel:str = "Not Specified"
+    analysisSourceLabel:str = "Not Specified"
 
     #Not used
     sputteringIonAtomicNum:int = 0 #sputtering ion or atom atomic number
@@ -278,8 +278,6 @@ class VAMAS_File:
     
     #End of file
     expTerm:str = 'end of experiment'
-
-
 
 
     def readVamasFile(self):
@@ -424,7 +422,7 @@ class VAMAS_File:
         for i in range(self.numExpVariables):
             self.expVariablesList.append(float(next(lines).strip()))
 
-        self.AnalysisSourceLabel = next(lines).strip()
+        self.analysisSourceLabel = next(lines).strip()
 
         sputteringModes = ['MAPDP', 'MAPSVDP', 'SDP', 'SDPSV']
         sputteringTechs = ['FABMS', 'FABMS energy spec', 'ISS', 'SIMS', 'SIMS energy spec', 'SNMS', 'SNMS energy spec']
