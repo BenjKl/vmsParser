@@ -315,7 +315,9 @@
     <addaction name="actionLoad"/>
     <addaction name="actionAppend_Files"/>
     <addaction name="actionSave"/>
+    <addaction name="separator"/>
     <addaction name="actionExport_to_Chantal"/>
+    <addaction name="toggle_Testserver"/>
     <addaction name="separator"/>
     <addaction name="actionRemove_Selected"/>
     <addaction name="actionRemove_All"/>
@@ -473,6 +475,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+E</string>
+   </property>
+  </action>
+  <action name="toggle_Testserver">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>use Testserver</string>
    </property>
   </action>
  </widget>

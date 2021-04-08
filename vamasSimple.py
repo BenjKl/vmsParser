@@ -1,6 +1,6 @@
 
 from dataclasses import dataclass, fields, field, asdict, replace
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import re
 
 
@@ -381,7 +381,7 @@ class VAMAS_File:
         self.timeZone = int(next(lines).strip())
         #Todo: Correct for Timezone and DST
         try:
-            self.date = datetime(year,month,day,hours,minutes,seconds)
+            self.date = datetime(year,month,day,hours,minutes,seconds, tzinfo=timezone(timedelta(hours=self.timeZone)))
         except:
             print("failed creating datetime object: {0}y, {1}m, {2}d, {3}h, {4}m, {5}s".format(year,month,day,hours,minutes,seconds))
             self.date = datetime.fromtimestamp(0) #Zero timestamp

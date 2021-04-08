@@ -11,7 +11,7 @@ from matplotlib.figure import Figure
 
 from dataclasses import dataclass, fields, field, asdict, replace
 from vamasSimple import VAMAS_File
-from jopes import JOPES_Investigation, JOPES_Measurement
+from jopes import import_investigation, import_measurement, logIn
 
 #VIEW <-> CONTROLLER <-> MODEL <-> DATA pattern with PyQt5
 #  ^                      ^
@@ -511,17 +511,19 @@ class MainWindow(QMainWindow):
     def exportToChantal(self):
         """Export selected columns to CHANTAL
         """
+        logIn(testserver = self.toggle_Testserver.isChecked())
         for colIndex, checked in enumerate(self.model.selectedColumns):
             if checked:
                 #Get current data class object
                 data = self.model.getObject(colIndex+1)
                 print("Exporting column {0} from file {1}".format(colIndex+1, data.fileName))
-                joInv = JOPES_Investigation()
-                invID = joInv.import_investigation(data)
-                print(joInv.data)
-                joMeas = JOPES_Measurement()
-                print(joMeas.import_measurement(data,invID))
-                print(joMeas.data)
+                invID = import_investigation(data)
+                if invID != 0:
+                    print("Imported to {0}, investigation ID: {1}".format(("testserver" if self.toggle_Testserver.isChecked() else "chantal"), invID))
+                    measID = import_measurement(data,invID)
+                    print("Imported to {0}, measurement ID: {1}".format(("testserver" if self.toggle_Testserver.isChecked() else "chantal"), measID))
+                else:
+                    print("Sample {0} not found".format(data.sampleName))
 
 
     def getLastSaveFolder(self):

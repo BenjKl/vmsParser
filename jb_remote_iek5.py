@@ -39,9 +39,9 @@ else:
     logging.warning("file with authentication data not found; maybe no emails can be sent")
 
 settings.ROOT_URL = "https://chantal.fz-juelich.de/"
-settings.TESTSERVER_ROOT_URL = "http://bob.ipv.kfa-juelich.de/"
+settings.TESTSERVER_ROOT_URL = os.environ.get("JULIABASE_SERVER_URL", "http://127.0.0.1:8000/")
 settings.SMTP_SERVER = "mail.fz-juelich.de"
-settings.SMTP_LOGIN = CREDENTIALS.get("b.klingebiel")
+settings.SMTP_LOGIN = CREDENTIALS.get("fzj_user")
 settings.SMTP_PASSWORD = CREDENTIALS.get("fzj_password")
 settings.EMAIL_TO = "chantal-admins@googlegroups.com"
 settings.EMAIL_FROM = "chantal@fz-juelich.de"
