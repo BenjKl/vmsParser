@@ -47,7 +47,7 @@ def import_investigation(vms:VAMAS_File):
 
     data = {
         "operator": primary_keys["users"][chantalUser],
-        "timestamp": vms.date, #format_timestamp(datetime.strptime(raw_data["Timestamp"], "%Y %m %d %H %M %S")),
+        "timestamp": format_timestamp(vms.date), #format_timestamp(datetime.strptime(raw_data["Timestamp"], "%Y %m %d %H %M %S")),
         "timestamp_inaccuracy": 2,
         "sample": sample.id,
         "finished": True,

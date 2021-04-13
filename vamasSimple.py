@@ -1,6 +1,6 @@
 
 from dataclasses import dataclass, fields, field, asdict, replace
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, date, timezone, timedelta
 import re
 
 
@@ -16,6 +16,10 @@ class VAMAS_File:
     """
     fileName:str= ""
 
+    #Numbers parsed from filename
+    runCycle:int=0  #2nd last number in filename
+    scanCycle:int=0 #Last number in filename
+
     #vms Identifier strings
     formatName:str = "VAMAS Surface Chemical Analysis Standard Data Transfer Format 1988"
     institutionName:str = "Not Specified"
@@ -27,7 +31,7 @@ class VAMAS_File:
 
     #Optional parameters parsed from comment:
     commentCreatedWith:str=""
-    commentAcquisition:str=""
+    acquisitionDate:date=date.today()
     commentSourceAnalyzerAngle:float=0
     commentpIG:float=0 #Chamber pressure
     commentpPir:float=0 #Chamber rough pressure (Pirani)
@@ -99,8 +103,8 @@ class VAMAS_File:
     sampleName:str = "Not Specified" #Sample identifier
     #B.K. added: part of sample name after . is MATRIX V4.4.9 stage position name
     posName:str = ""
-    #Block datetime
-    date:datetime = datetime.now()
+    #Block timestamp
+    timestamp:datetime = datetime.now()
     timeZone:int = 0 #number of hours in advance of Greenwich Mean Time
     numBlockCommentLines:int = 0 #number of lines in block commen
     blockComment:str = "Not Specified"
@@ -283,7 +287,12 @@ class VAMAS_File:
     def readVamasFile(self):
         """Read the content of the VAMAS file into the dataclass according to the paper
         """
+
+        #Parse numbers from filename
+        self.runCycle, self.scanCycle = self.parseFileName()
+
         self.file = open(self.fileName, encoding='cp1252') #Western Windows encoding
+
         self.file.seek(0)
         lines = iter(self.file.readlines())
 
@@ -302,7 +311,9 @@ class VAMAS_File:
 
         #B.K. Parse Additional Info from comment:
         self.commentCreatedWith, self.comment = parseString(self.comment, "Created with")
-        self.commentAcquisition, self.comment = parseString(self.comment, "Date of Acquisition")
+        commentAcquisition, self.comment = parseString(self.comment, "Date of Acquisition")
+        #Try to parse aquisition date from comment
+        self.acquisitionDate = self.parseDate(commentAcquisition)
         self.commentSourceAnalyzerAngle, unit, self.comment = parseParameter(self.comment, "SourceAnalyserAngle")
         self.commentpIG, unit, self.comment = parseParameter(self.comment, "pIG")
         self.commentpPir, unit, self.comment = parseParameter(self.comment, "pPIR")
@@ -379,13 +390,15 @@ class VAMAS_File:
         seconds = int(next(lines).strip())
 
         self.timeZone = int(next(lines).strip())
-        #Todo: Correct for Timezone and DST
         try:
-            self.date = datetime(year,month,day,hours,minutes,seconds, tzinfo=timezone(timedelta(hours=self.timeZone)))
+            self.timestamp = datetime(year,month,day,hours,minutes,seconds, tzinfo=timezone(timedelta(hours=self.timeZone)))
         except:
             print("failed creating datetime object: {0}y, {1}m, {2}d, {3}h, {4}m, {5}s".format(year,month,day,hours,minutes,seconds))
-            self.date = datetime.fromtimestamp(0) #Zero timestamp
+            self.timestamp = datetime.fromtimestamp(0) #Zero timestamp
 
+        #if acquisition date not in comment use acquisition date from timestamp
+        if self.acquisitionDate == None: 
+            self.acquisitionDate = self.timestamp.date()
 
         # 8
         self.numBlockCommentLines = int(next(lines).strip())
@@ -586,6 +599,34 @@ class VAMAS_File:
                 self.xAxisValuesList.append(self.xAxisStart +  i*self.xAxisIncrement)
 
 
+    def parseFileName(self):
+        """Parse run- and scan-cycle number from vms filename
+
+        ### Returns:
+            {tuple} -- tuple with runnumber, cyclenumber
+        """
+        regex = re.compile(r"([0-9]+)[-_]([0-9]+)\D+$")
+        result = regex.search(self.fileName) 
+        if result:
+            return (int(result.group(1)), int(result.group(2)))
+        else:
+            return (0,0)
+
+    def parseDate(self, text):
+        """Parse Date from Text with <year>.<month>.<day> format
+
+        ### Arguments:
+            text {str} -- String with date in above format
+
+        ### Returns:
+            {date} -- date object with parsed date or None
+        """
+        regex = re.compile(r"([0-9]+)\.([0-9]+)\.([0-9]+)")
+        result = regex.search(text)
+        if result:
+            return date(int(result.group(1)), int(result.group(2)), int(result.group(3)))
+        else:
+            return None
 
 def parseParameter(comment, keyword):
     """
@@ -671,13 +712,17 @@ def parseString(comment, keyword):
 
 
 if __name__ == "__main__":
-    vms = VAMAS_File(fileName="test.vms")
+    vms = VAMAS_File(fileName="20201130-115629_ESp_Cayman-20REIN-035-10--00139_00001-Detector_Region.vms")
     vms.readVamasFile()
     print(vms.fileName)
+
     print(vms.comment)
-    print(vms.date)
+    print(vms.timestamp)
+    print(vms.acquisitionDate)
     print(vms.blockComment)
     print(vms.xrayVoltage)
     print(vms.analyserAperture)
     print(vms.analyserSettingStr)
+    print(vms.runCycle)
+    print(vms.scanCycle)    
     
